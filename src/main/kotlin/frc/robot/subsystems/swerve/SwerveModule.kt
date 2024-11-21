@@ -8,6 +8,8 @@ import com.ctre.phoenix6.hardware.CANcoder
 import com.hamosad1657.lib.motors.HaTalonFX
 import com.hamosad1657.lib.units.AngularVelocity
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.kinematics.SwerveModuleState
+import edu.wpi.first.util.sendable.SendableBuilder
 import kotlin.math.PI
 
 /** Drive motor ID - The ID of the drive motor.
@@ -45,6 +47,8 @@ class SwerveModule(
 
 	private val wheelRadiusMeters: Double,
 
+	private val moduleName: String
+
 ) {
 	private val driveMotor = HaTalonFX(driveMotorID).apply {
 		inverted = invertedDrive
@@ -66,17 +70,24 @@ class SwerveModule(
 	val speedMPS: Double get() = wheelCircumferenceMeters * driveMotor.velocity.value / driveTransmission
 	val position: Double get() = wheelCircumferenceMeters * driveMotor.position.value / driveTransmission
 
+	/** The module's angle setpoint.
+	 *
+	 * Automatically updates the motor's feedback control. */
 	private var angleSetpoint: Rotation2d = Rotation2d()
 	private set(value) {
 		controlRequestSteerAngle.Position = value.rotations
 		steerMotor.setControl(controlRequestSteerAngle)
 		field = value
 	}
+	/** The module's speed setpoint in meters per second.
+	 *
+	 * Automatically updates the motor's feedback control. */
 	private var speedSetpointMPS: Double = 0.0
 	set(value) {
 		angularVelocitySetpoint = AngularVelocity.fromRps(value / wheelCircumferenceMeters * driveTransmission)
 		field = value
 	}
+	/** The angular velocity setpoint of the drive motor. */
 	private var angularVelocitySetpoint = AngularVelocity.fromRps(0.0)
 		private set(value) {
 			controlRequestDriveVelocity.Velocity = value.asRps
@@ -90,5 +101,27 @@ class SwerveModule(
 		Slot = 0
 		LimitForwardMotion = false
 		LimitReverseMotion = false
+	}
+
+	// Functions
+	fun setModuleSpeedMPS(speedMPS: Double) {
+		speedSetpointMPS = speedMPS
+	}
+	fun setModuleAngle(angle: Rotation2d) {
+		angleSetpoint = angle
+	}
+
+	fun setModuleState(state: SwerveModuleState) {
+		setModuleSpeedMPS(state.speedMetersPerSecond)
+		setModuleAngle(state.angle)
+	}
+
+	// Logging
+	fun sendModuleInfo(builder: SendableBuilder) {
+		builder.addDoubleProperty("$moduleName rotation deg", {angle.degrees}, null)
+		builder.addDoubleProperty("$moduleName speed MPS", {speedMPS}, null)
+		
+		builder.addDoubleProperty("$moduleName rotation setpoint deg", {angleSetpoint.degrees}, null)
+		builder.addDoubleProperty("$moduleName speed setpoint MPS", {speedSetpointMPS}, null)
 	}
 }
