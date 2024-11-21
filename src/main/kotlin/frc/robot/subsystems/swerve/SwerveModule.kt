@@ -68,7 +68,7 @@ class SwerveModule(
 
 	val angle: Rotation2d get() = Rotation2d.fromDegrees(canCoder.absolutePosition.value)
 	val speedMPS: Double get() = wheelCircumferenceMeters * driveMotor.velocity.value / driveTransmission
-	val position: Double get() = wheelCircumferenceMeters * driveMotor.position.value / driveTransmission
+	val position: Double get() = (wheelCircumferenceMeters * driveMotor.position.value / driveTransmission)
 
 	/** The module's angle setpoint.
 	 *
@@ -120,7 +120,7 @@ class SwerveModule(
 	fun sendModuleInfo(builder: SendableBuilder) {
 		builder.addDoubleProperty("$moduleName rotation deg", {angle.degrees}, null)
 		builder.addDoubleProperty("$moduleName speed MPS", {speedMPS}, null)
-		
+
 		builder.addDoubleProperty("$moduleName rotation setpoint deg", {angleSetpoint.degrees}, null)
 		builder.addDoubleProperty("$moduleName speed setpoint MPS", {speedSetpointMPS}, null)
 	}

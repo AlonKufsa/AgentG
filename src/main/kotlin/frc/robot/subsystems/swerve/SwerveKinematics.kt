@@ -53,7 +53,7 @@ object SwerveKinematics {
 		val discreteChassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, 0.02)
 		currentRobotRelativeChassisSpeeds = discreteChassisSpeeds
 
-		val velocity = Translation2d(-discreteChassisSpeeds.vyMetersPerSecond, discreteChassisSpeeds.vxMetersPerSecond)
+		val velocity = Translation2d(discreteChassisSpeeds.vyMetersPerSecond, discreteChassisSpeeds.vxMetersPerSecond)
 
 		val velocityModuleState = robotRelativeVelocityToModuleStates(velocity)
 		val rotationModuleStates =
