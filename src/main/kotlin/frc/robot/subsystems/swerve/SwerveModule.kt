@@ -8,6 +8,7 @@ import com.ctre.phoenix6.hardware.CANcoder
 import com.hamosad1657.lib.motors.HaTalonFX
 import com.hamosad1657.lib.units.AngularVelocity
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.util.sendable.SendableBuilder
 import kotlin.math.PI
@@ -47,9 +48,9 @@ class SwerveModule(
 
 	private val wheelRadiusMeters: Double,
 
-	private val moduleName: String
+	private val moduleName: String,
 
-) {
+	) {
 	private val driveMotor = HaTalonFX(driveMotorID).apply {
 		inverted = invertedDrive
 		configurator.apply(driveMotorConfigs)
@@ -68,25 +69,28 @@ class SwerveModule(
 
 	val angle: Rotation2d get() = Rotation2d.fromDegrees(canCoder.absolutePosition.value)
 	val speedMPS: Double get() = wheelCircumferenceMeters * driveMotor.velocity.value / driveTransmission
-	val position: Double get() = (wheelCircumferenceMeters * driveMotor.position.value / driveTransmission)
+	val position: SwerveModulePosition
+		get() = SwerveModulePosition(wheelCircumferenceMeters * driveMotor.position.value / driveTransmission, angle)
 
 	/** The module's angle setpoint.
 	 *
 	 * Automatically updates the motor's feedback control. */
 	private var angleSetpoint: Rotation2d = Rotation2d()
-	private set(value) {
-		controlRequestSteerAngle.Position = value.rotations
-		steerMotor.setControl(controlRequestSteerAngle)
-		field = value
-	}
+		private set(value) {
+			controlRequestSteerAngle.Position = value.rotations
+			steerMotor.setControl(controlRequestSteerAngle)
+			field = value
+		}
+
 	/** The module's speed setpoint in meters per second.
 	 *
 	 * Automatically updates the motor's feedback control. */
 	private var speedSetpointMPS: Double = 0.0
-	set(value) {
-		angularVelocitySetpoint = AngularVelocity.fromRps(value / wheelCircumferenceMeters * driveTransmission)
-		field = value
-	}
+		set(value) {
+			angularVelocitySetpoint = AngularVelocity.fromRps(value / wheelCircumferenceMeters * driveTransmission)
+			field = value
+		}
+
 	/** The angular velocity setpoint of the drive motor. */
 	private var angularVelocitySetpoint = AngularVelocity.fromRps(0.0)
 		private set(value) {
@@ -107,6 +111,7 @@ class SwerveModule(
 	fun setModuleSpeedMPS(speedMPS: Double) {
 		speedSetpointMPS = speedMPS
 	}
+
 	fun setModuleAngle(angle: Rotation2d) {
 		angleSetpoint = angle
 	}
@@ -118,10 +123,10 @@ class SwerveModule(
 
 	// Logging
 	fun sendModuleInfo(builder: SendableBuilder) {
-		builder.addDoubleProperty("$moduleName rotation deg", {angle.degrees}, null)
-		builder.addDoubleProperty("$moduleName speed MPS", {speedMPS}, null)
+		builder.addDoubleProperty("$moduleName rotation deg", { angle.degrees }, null)
+		builder.addDoubleProperty("$moduleName speed MPS", { speedMPS }, null)
 
-		builder.addDoubleProperty("$moduleName rotation setpoint deg", {angleSetpoint.degrees}, null)
-		builder.addDoubleProperty("$moduleName speed setpoint MPS", {speedSetpointMPS}, null)
+		builder.addDoubleProperty("$moduleName rotation setpoint deg", { angleSetpoint.degrees }, null)
+		builder.addDoubleProperty("$moduleName speed setpoint MPS", { speedSetpointMPS }, null)
 	}
 }
