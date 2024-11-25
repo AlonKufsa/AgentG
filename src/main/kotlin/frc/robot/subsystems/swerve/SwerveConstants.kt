@@ -32,6 +32,12 @@ object SwerveConstants {
 	const val STEER_MM_ACCELERATION = 100.0
 	const val STEER_MM_CRUISE_VELOCITY = 100.0
 
+	val ROTATION_SETPOINT_PID_GAINS = PIDGains(
+		kP = 0.0,
+		kI = 0.0,
+		kD = 0.0
+	)
+
 	const val WHEEL_RADIUS_METERS = 0.0508
 	const val MAX_SPEED_MPS = 5.0
 
@@ -124,11 +130,11 @@ object SwerveConstants {
 
 	val pigeonConfigs: Pigeon2Configuration = Pigeon2Configuration()
 
-	val TRANSLATION_PID = PIDConstants(0.2, 0.0, 0.0)
-	val ROTATION_PID = PIDConstants(0.1, 0.0, 0.0)
+	val TRANSLATION_PID_GAINS = PIDConstants(0.2, 0.0, 0.0)
+	val ROTATION_PID_GAINS = PIDConstants(0.1, 0.0, 0.0)
 	val PP_CONFIGS = HolonomicPathFollowerConfig(
-		TRANSLATION_PID,
-		ROTATION_PID,
+		TRANSLATION_PID_GAINS,
+		ROTATION_PID_GAINS,
 		MAX_SPEED_MPS,
 		DRIVEBASE_RADIUS_METERS,
 		ReplanningConfig()

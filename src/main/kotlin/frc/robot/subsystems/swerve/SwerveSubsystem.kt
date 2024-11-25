@@ -1,13 +1,22 @@
 package frc.robot.subsystems.swerve
 
 import com.ctre.phoenix6.hardware.Pigeon2
+import com.pathplanner.lib.auto.AutoBuilder
+import edu.wpi.first.math.MathUtil
+import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModulePosition
+import edu.wpi.first.wpilibj.DriverStation.Alliance.Red
+import edu.wpi.first.wpilibj.smartdashboard.Field2d
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import frc.robot.Robot
+import frc.robot.subsystems.swerve.SwerveSubsystem.PoseEstimationState.*
+import frc.robot.subsystems.swerve.SwerveSubsystem.SwerveRotationControlState.ROTATION_SETPOINT
 import frc.robot.RobotMap.SwerveMap as Map
 import frc.robot.subsystems.swerve.SwerveConstants as Constants
 
@@ -81,17 +90,125 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		currentSwervePositionsArray,
 		Pose2d()
 	)
+	private val fieldWidget = Field2d()
+	val rotationPID = PIDController(
+		Constants.ROTATION_PID_GAINS.kP,
+		Constants.ROTATION_PID_GAINS.kI,
+		Constants.ROTATION_PID_GAINS.kD
+	).apply {
+		enableContinuousInput(0.0, 360.0)
+	}
+	var rotationSetpoint = Rotation2d()
 
 	private val angle: Rotation2d
-		get() = pigeon.rotation2d
+		get() = Rotation2d.fromDegrees(MathUtil.inputModulus(pigeon.rotation2d.degrees, 0.0, 360.0))
 	private val currentSwervePositionsArray: Array<SwerveModulePosition>
 		get() = arrayOf(frontRight.position, frontLeft.position, backLeft.position, backRight.position)
+	private val robotRelativeSpeeds: ChassisSpeeds
+		get() = SwerveKinematics.currentRobotRelativeChassisSpeeds
+	private val fieldRelativeSpeeds: ChassisSpeeds
+		get() = SwerveKinematics.currentFieldRelativeChassisSpeeds
+	private val estimatedPose: Pose2d
+		get() = poseEstimator.estimatedPosition
 
-	enum class SwerveControlState {
-		IDLE,
-		FULL_MANUAL_CONTROL,
-		FOLLOWING_PATH,
-		FOLLOWING_PATH_TRANSLATION_ONLY,
-		
+
+	enum class SwerveRotationControlState {
+		ANGULAR_VELOCITY,
+		ROTATION_SETPOINT // Chassis speed's omega is ignored and an external rotation setpoint is used
+	}
+
+	var swerveRotationControlState = SwerveRotationControlState.ANGULAR_VELOCITY
+
+	enum class PoseEstimationState {
+		OFF,
+		VISION_ONLY,
+		ODOMETRY_ONLY,
+		FULL_POSE_ESTIMATION
+	}
+
+	var poseEstimationState = FULL_POSE_ESTIMATION
+
+	init {
+		AutoBuilder.configureHolonomic(
+			{ estimatedPose },
+			this::resetOdometry,
+			{ robotRelativeSpeeds },
+			{ speeds: ChassisSpeeds -> drive(false, speeds) },
+			Constants.PP_CONFIGS,
+			{
+				Robot.getAlliance() == Red
+			},
+			this
+		)
+	}
+
+	// Gyro
+	fun resetGyro() {
+		val pose = estimatedPose
+		pigeon.reset()
+		poseEstimator.resetPosition(
+			Rotation2d(),
+			currentSwervePositionsArray,
+			Pose2d(pose.x, pose.y, Rotation2d())
+		)
+	}
+
+	fun setGyro(newAngle: Rotation2d) {
+		val pose = estimatedPose
+		pigeon.setYaw(newAngle.degrees)
+		poseEstimator.resetPosition(
+			newAngle,
+			currentSwervePositionsArray,
+			Pose2d(pose.x, pose.y, newAngle)
+		)
+	}
+
+	// Pose estimation
+	private fun resetOdometry(pose: Pose2d) {
+		poseEstimator.resetPosition(angle, currentSwervePositionsArray, pose)
+	}
+
+	private fun applyVisionMeasurement() {
+
+	}
+
+	// Drive
+	fun drive(fieldRelative: Boolean, chassisSpeeds: ChassisSpeeds) {
+		if (swerveRotationControlState == ROTATION_SETPOINT) {
+			chassisSpeeds.omegaRadiansPerSecond = rotationPID.calculate(angle.degrees)
+		}
+		val moduleStates =
+			if (fieldRelative) {
+				SwerveKinematics.fieldRelativeChassisSpeedsToModuleStates(
+					chassisSpeeds,
+					angle,
+					Constants.MAX_SPEED_MPS,
+					Constants.DRIVEBASE_RADIUS_METERS
+				)
+			} else {
+				SwerveKinematics.robotRelativeChassisSpeedsToModuleStates(
+					chassisSpeeds,
+					Constants.MAX_SPEED_MPS,
+					Constants.DRIVEBASE_RADIUS_METERS
+				)
+			}
+		frontRight.setModuleState(moduleStates[0])
+		frontLeft.setModuleState(moduleStates[1])
+		backLeft.setModuleState(moduleStates[2])
+		backRight.setModuleState(moduleStates[3])
+	}
+
+	// Periodic
+	override fun periodic() {
+		// Pose estimation
+		if (poseEstimationState == FULL_POSE_ESTIMATION || poseEstimationState == ODOMETRY_ONLY) {
+			poseEstimator.update(
+				angle,
+				currentSwervePositionsArray,
+			)
+		}
+		if (poseEstimationState == FULL_POSE_ESTIMATION || poseEstimationState == VISION_ONLY) {
+			applyVisionMeasurement()
+		}
 	}
 }

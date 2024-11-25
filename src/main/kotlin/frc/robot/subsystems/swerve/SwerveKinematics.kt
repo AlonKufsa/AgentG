@@ -20,7 +20,10 @@ object SwerveKinematics {
 	 *
 	 * Positive angular velocity is counterclockwise, negative is clockwise.
 	 */
-	fun angularVelocityToModuleStates(angularVelocity: AngularVelocity, driveBaseRadiusMeters: Double): Array<SwerveModuleState> {
+	fun angularVelocityToModuleStates(
+		angularVelocity: AngularVelocity,
+		driveBaseRadiusMeters: Double,
+	): Array<SwerveModuleState> {
 		val wheelSpeedMPS: Double = angularVelocity.asRps * 2 * PI * driveBaseRadiusMeters
 
 		val moduleStates = Array<SwerveModuleState>(4) { SwerveModuleState() }
@@ -37,7 +40,7 @@ object SwerveKinematics {
 
 	/** Converts between a velocity in some direction to the module states needed to achieve it. */
 	fun robotRelativeVelocityToModuleStates(velocity: Translation2d): Array<SwerveModuleState> {
-		return Array<SwerveModuleState>(4) { SwerveModuleState(velocity.norm, velocity. angle) }
+		return Array<SwerveModuleState>(4) { SwerveModuleState(velocity.norm, velocity.angle) }
 	}
 
 	private fun moduleStateToTranslation2d(moduleState: SwerveModuleState): Translation2d {
@@ -48,7 +51,9 @@ object SwerveKinematics {
 	 *
 	 * Positive chassis speeds omega results in counterclockwise rotation.*/
 	fun robotRelativeChassisSpeedsToModuleStates(
-		chassisSpeeds: ChassisSpeeds, maxSpeedMPS: Double, driveBaseRadiusMeters: Double
+		chassisSpeeds: ChassisSpeeds,
+		maxSpeedMPS: Double,
+		driveBaseRadiusMeters: Double,
 	): Array<SwerveModuleState> {
 		val discreteChassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, 0.02)
 		currentRobotRelativeChassisSpeeds = discreteChassisSpeeds
@@ -57,7 +62,8 @@ object SwerveKinematics {
 
 		val velocityModuleState = robotRelativeVelocityToModuleStates(velocity)
 		val rotationModuleStates =
-			angularVelocityToModuleStates(AngularVelocity.fromRadPs(discreteChassisSpeeds.omegaRadiansPerSecond), driveBaseRadiusMeters)
+			angularVelocityToModuleStates(AngularVelocity.fromRadPs(discreteChassisSpeeds.omegaRadiansPerSecond),
+				driveBaseRadiusMeters)
 
 		val wantedStates = Array<SwerveModuleState>(4) { SwerveModuleState() }
 
@@ -98,9 +104,9 @@ object SwerveKinematics {
 	 * Positive omega results in robot spinning counter-clockwise*/
 	fun fieldRelativeChassisSpeedsToModuleStates(
 		chassisSpeeds: ChassisSpeeds,
-		maxSpeedMPS: Double,
 		heading: Rotation2d,
-		driveBaseRadiusMeters: Double
+		maxSpeedMPS: Double,
+		driveBaseRadiusMeters: Double,
 	): Array<SwerveModuleState> {
 		val discreteChassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, 0.02)
 		currentFieldRelativeChassisSpeeds = discreteChassisSpeeds
@@ -115,7 +121,8 @@ object SwerveKinematics {
 	fun factorModuleStates(maxSpeedMPS: Double, moduleStates: Array<SwerveModuleState>): Array<SwerveModuleState> {
 		if (max(max(moduleStates[0].speedMetersPerSecond, moduleStates[1].speedMetersPerSecond),
 				max(moduleStates[2].speedMetersPerSecond, moduleStates[3].speedMetersPerSecond))
-			> maxSpeedMPS && maxSpeedMPS != 0.0) {
+			> maxSpeedMPS && maxSpeedMPS != 0.0
+		) {
 			val highestModuleSpeed =
 				max(max(moduleStates[0].speedMetersPerSecond, moduleStates[1].speedMetersPerSecond),
 					max(moduleStates[2].speedMetersPerSecond, moduleStates[3].speedMetersPerSecond))

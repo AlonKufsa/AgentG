@@ -3,6 +3,8 @@ package frc.robot
 import edu.wpi.first.hal.FRCNetComm.tInstances
 import edu.wpi.first.hal.FRCNetComm.tResourceType
 import edu.wpi.first.hal.HAL
+import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.DriverStation.Alliance
 import edu.wpi.first.wpilibj.TimedRobot
 import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
@@ -18,77 +20,71 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler
  * the `Main.kt` file in the project. (If you use the IDE's Rename or Move refactorings when renaming the
  * object or package, it will get changed everywhere.)
  */
-object Robot : TimedRobot()
-{
+object Robot : TimedRobot() {
 
-    private var autonomousCommand: Command? = null
-
-
-    override fun robotInit()
-    {
-        // Report the use of the Kotlin Language for "FRC Usage Report" statistics
-        HAL.report(tResourceType.kResourceType_Language, tInstances.kLanguage_Kotlin, 0, WPILibVersion.Version)
-        // Access the RobotContainer object so that it is initialized. This will perform all our
-        // button bindings, and put our autonomous chooser on the dashboard.
-        RobotContainer
-    }
+	private var autonomousCommand: Command? = null
 
 
-    override fun robotPeriodic()
-    {
-        CommandScheduler.getInstance().run()
-    }
+	override fun robotInit() {
+		// Report the use of the Kotlin Language for "FRC Usage Report" statistics
+		HAL.report(tResourceType.kResourceType_Language, tInstances.kLanguage_Kotlin, 0, WPILibVersion.Version)
+		// Access the RobotContainer object so that it is initialized. This will perform all our
+		// button bindings, and put our autonomous chooser on the dashboard.
+		RobotContainer
+	}
 
-    override fun disabledInit()
-    {
 
-    }
+	override fun robotPeriodic() {
+		CommandScheduler.getInstance().run()
+	}
 
-    override fun disabledPeriodic()
-    {
+	override fun disabledInit() {
 
-    }
+	}
 
-    override fun autonomousInit()
-    {
-        autonomousCommand = RobotContainer.getAutonomousCommand()
-        autonomousCommand?.schedule()
-    }
+	override fun disabledPeriodic() {
 
-    override fun autonomousPeriodic()
-    {
+	}
 
-    }
+	override fun autonomousInit() {
+		autonomousCommand = RobotContainer.getAutonomousCommand()
+		autonomousCommand?.schedule()
+	}
 
-    override fun teleopInit()
-    {
-        autonomousCommand?.cancel()
-    }
+	override fun autonomousPeriodic() {
 
-    /** This method is called periodically during operator control.  */
-    override fun teleopPeriodic()
-    {
+	}
 
-    }
+	override fun teleopInit() {
+		autonomousCommand?.cancel()
+	}
 
-    override fun testInit()
-    {
-        // Cancels all running commands at the start of test mode.
-        CommandScheduler.getInstance().cancelAll()
-    }
+	/** This method is called periodically during operator control.  */
+	override fun teleopPeriodic() {
 
-    override fun testPeriodic()
-    {
+	}
 
-    }
+	override fun testInit() {
+		// Cancels all running commands at the start of test mode.
+		CommandScheduler.getInstance().cancelAll()
+	}
 
-    override fun simulationInit()
-    {
+	override fun testPeriodic() {
 
-    }
+	}
 
-    override fun simulationPeriodic()
-    {
+	override fun simulationInit() {
 
-    }
+	}
+
+	override fun simulationPeriodic() {
+
+	}
+
+	fun getAlliance(): Alliance {
+		val driverStationAllianceOptional = DriverStation.getAlliance()
+		if (driverStationAllianceOptional.isPresent) {
+			return driverStationAllianceOptional.get()
+		} else return Alliance.Blue.also { DriverStation.reportError("No alliance chosen!", false) }
+	}
 }
