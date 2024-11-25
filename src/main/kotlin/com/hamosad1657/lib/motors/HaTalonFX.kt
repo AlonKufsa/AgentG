@@ -19,7 +19,7 @@ import com.revrobotics.CANSparkBase.IdleMode
  */
 const val FalconSafeTempC = 90
 
-class HaTalonFX(deviceNumber: Int) : TalonFX(deviceNumber) {
+class HaTalonFX(deviceNumber: Int, canbus: String) : TalonFX(deviceNumber, canbus) {
 	init {
 		isSafetyEnabled = true
 	}

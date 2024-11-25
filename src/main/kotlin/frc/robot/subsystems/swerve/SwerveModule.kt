@@ -50,18 +50,21 @@ class SwerveModule(
 
 	private val moduleName: String,
 
-	) {
-	private val driveMotor = HaTalonFX(driveMotorID).apply {
+	private val canbusNetwork: String,
+) {
+	private val driveMotor = HaTalonFX(driveMotorID, canbusNetwork).apply {
+		restoreFactoryDefaults()
 		inverted = invertedDrive
 		configurator.apply(driveMotorConfigs)
 	}
 
-	private val steerMotor = HaTalonFX(steerMotorID).apply {
+	private val steerMotor = HaTalonFX(steerMotorID, canbusNetwork).apply {
+		restoreFactoryDefaults()
 		inverted = invertedSteer
 		configurator.apply(steerMotorConfigs)
 	}
 
-	private val canCoder = CANcoder(canCoderID).apply {
+	private val canCoder = CANcoder(canCoderID, canbusNetwork).apply {
 		configurator.apply(canCoderConfigs)
 	}
 

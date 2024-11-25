@@ -1,6 +1,11 @@
 package frc.robot
 
+import com.hamosad1657.lib.math.simpleDeadband
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller
+import frc.robot.commands.*
+import frc.robot.subsystems.swerve.SwerveSubsystem
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -13,22 +18,35 @@ import edu.wpi.first.wpilibj2.command.Command
  * to the various subsystems in this container to pass into to commands. The commands can just
  * directly reference the (single instance of the) object.
  */
-object RobotContainer
-{
-    init
-    {
-        configureBindings()
-    }
+object RobotContainer {
+	const val DEADBAND = 0.06
+	val mainController = CommandPS4Controller(0)
 
-    /** Use this method to define your `trigger->command` mappings. */
-    private fun configureBindings()
-    {
+	init {
+		sendSubsystemData()
+		configureDefaultCommands()
+		configureBindings()
+	}
 
-    }
+	/** Use this method to define your `trigger->command` mappings. */
+	private fun configureBindings() {
 
-    fun getAutonomousCommand(): Command?
-    {
-        // TODO: Implement properly
-        return null
-    }
+	}
+
+	private fun configureDefaultCommands() {
+		SwerveSubsystem.defaultCommand = SwerveSubsystem.driveAngularVelocity(
+			{ simpleDeadband(mainController.leftY, DEADBAND) },
+			{ simpleDeadband(mainController.leftX, DEADBAND) },
+			{ simpleDeadband(mainController.rightX, DEADBAND) }
+		)
+	}
+
+	private fun sendSubsystemData() {
+		SmartDashboard.putData(SwerveSubsystem)
+	}
+
+	fun getAutonomousCommand(): Command? {
+		// TODO: Implement properly
+		return null
+	}
 }

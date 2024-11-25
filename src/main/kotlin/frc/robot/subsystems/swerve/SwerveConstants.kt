@@ -7,12 +7,13 @@ import com.ctre.phoenix6.signals.AbsoluteSensorRangeValue.Signed_PlusMinusHalf
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue.RemoteCANcoder
 import com.ctre.phoenix6.signals.SensorDirectionValue.CounterClockwise_Positive
 import com.hamosad1657.lib.math.PIDGains
-import com.hamosad1657.lib.units.rps
+import com.hamosad1657.lib.units.AngularVelocity
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig
 import com.pathplanner.lib.util.PIDConstants
 import com.pathplanner.lib.util.ReplanningConfig
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj.DriverStation
+import kotlin.math.PI
 import kotlin.math.sqrt
 
 object SwerveConstants {
@@ -43,8 +44,8 @@ object SwerveConstants {
 
 	/** The amount of rotations the motor does for every rotation of the wheel */
 	const val DRIVE_TRANSMISSION = 6.746031746031747
-	val MAX_ANGULAR_VELOCITY = 2.0.rps
 	val DRIVEBASE_RADIUS_METERS = 0.417405
+	val MAX_ANGULAR_VELOCITY = AngularVelocity.fromRps(MAX_SPEED_MPS / 2 * PI * DRIVEBASE_RADIUS_METERS)
 	val MODULE_OFFSET = (DRIVEBASE_RADIUS_METERS / sqrt(2.0))
 
 	val FRONT_RIGHT_OFFSET = Rotation2d.fromDegrees(-268.066406)

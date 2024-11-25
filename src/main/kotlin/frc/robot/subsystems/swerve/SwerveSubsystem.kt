@@ -11,8 +11,11 @@ import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModulePosition
+import edu.wpi.first.math.kinematics.SwerveModuleState
+import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.DriverStation.Alliance.Red
 import edu.wpi.first.wpilibj.smartdashboard.Field2d
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.Robot
 import frc.robot.subsystems.swerve.SwerveSubsystem.PoseEstimationState.*
@@ -33,7 +36,8 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		canCoderID = Map.FrontRight.CAN_CODER_ID,
 		canCoderConfigs = Constants.canCoderConfigs("FrontRight"),
 		wheelRadiusMeters = Constants.WHEEL_RADIUS_METERS,
-		moduleName = "FrontRight"
+		moduleName = "FrontRight",
+		Constants.SWERVE_CAN_BUS
 	)
 	private val frontLeft = SwerveModule(
 		driveMotorID = Map.FrontLeft.DRIVE_MOTOR_ID,
@@ -46,7 +50,8 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		canCoderID = Map.FrontLeft.CAN_CODER_ID,
 		canCoderConfigs = Constants.canCoderConfigs("FrontLeft"),
 		wheelRadiusMeters = Constants.WHEEL_RADIUS_METERS,
-		moduleName = "FrontLeft"
+		moduleName = "FrontLeft",
+		Constants.SWERVE_CAN_BUS
 	)
 	private val backLeft = SwerveModule(
 		driveMotorID = Map.BackLeft.DRIVE_MOTOR_ID,
@@ -59,7 +64,8 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		canCoderID = Map.BackLeft.CAN_CODER_ID,
 		canCoderConfigs = Constants.canCoderConfigs("BackLeft"),
 		wheelRadiusMeters = Constants.WHEEL_RADIUS_METERS,
-		moduleName = "BackLeft"
+		moduleName = "BackLeft",
+		Constants.SWERVE_CAN_BUS
 	)
 	private val backRight = SwerveModule(
 		driveMotorID = Map.BackRight.DRIVE_MOTOR_ID,
@@ -72,9 +78,10 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		canCoderID = Map.BackRight.CAN_CODER_ID,
 		canCoderConfigs = Constants.canCoderConfigs("BackRight"),
 		wheelRadiusMeters = Constants.WHEEL_RADIUS_METERS,
-		moduleName = "BackRight"
+		moduleName = "BackRight",
+		Constants.SWERVE_CAN_BUS
 	)
-	private val pigeon = Pigeon2(Map.PIGEON_2_ID).apply {
+	private val pigeon = Pigeon2(Map.PIGEON_2_ID, Constants.SWERVE_CAN_BUS).apply {
 		configurator.apply(Constants.pigeonConfigs)
 	}
 
@@ -126,7 +133,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		FULL_POSE_ESTIMATION
 	}
 
-	var poseEstimationState = FULL_POSE_ESTIMATION
+	var poseEstimationState = ODOMETRY_ONLY
 
 	init {
 		AutoBuilder.configureHolonomic(
@@ -140,6 +147,13 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 			},
 			this
 		)
+	}
+
+	fun resetModules() {
+		frontRight.setModuleState(SwerveModuleState())
+		frontLeft.setModuleState(SwerveModuleState())
+		backLeft.setModuleState(SwerveModuleState())
+		backRight.setModuleState(SwerveModuleState())
 	}
 
 	// Gyro
@@ -210,5 +224,18 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		if (poseEstimationState == FULL_POSE_ESTIMATION || poseEstimationState == VISION_ONLY) {
 			applyVisionMeasurement()
 		}
+		fieldWidget.robotPose = estimatedPose
+	}
+
+	// Telemetry
+	override fun initSendable(builder: SendableBuilder) {
+		frontRight.sendModuleInfo(builder)
+		frontLeft.sendModuleInfo(builder)
+		backLeft.sendModuleInfo(builder)
+		backRight.sendModuleInfo(builder)
+
+		builder.addDoubleProperty("Robot heading deg", { angle.degrees }, null)
+
+		SmartDashboard.putData(fieldWidget)
 	}
 }
