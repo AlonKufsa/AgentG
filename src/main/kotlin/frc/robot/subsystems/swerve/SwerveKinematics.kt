@@ -90,10 +90,10 @@ object SwerveKinematics {
 		wantedStates[3].speedMetersPerSecond = backRightCombined.norm
 
 		SmartDashboard.putNumberArray("Wanted module states", arrayOf(
-			frontRightCombined.angle.degrees, frontRightCombined.norm,
-			frontLeftCombined.angle.degrees, frontLeftCombined.norm,
-			backLeftCombined.angle.degrees, backLeftCombined.norm,
-			backRightCombined.angle.degrees, backRightCombined.norm
+			frontRightCombined.angle.rotateBy(Rotation2d.fromDegrees(-90.0)).degrees, frontRightCombined.norm,
+			frontLeftCombined.angle.rotateBy(Rotation2d.fromDegrees(-90.0)).degrees, frontLeftCombined.norm,
+			backLeftCombined.angle.rotateBy(Rotation2d.fromDegrees(-90.0)).degrees, backLeftCombined.norm,
+			backRightCombined.angle.rotateBy(Rotation2d.fromDegrees(-90.0)).degrees, backRightCombined.norm
 		))
 		return factorModuleStates(maxSpeedMPS, wantedStates)
 	}
@@ -114,7 +114,7 @@ object SwerveKinematics {
 
 		val moduleTranslationVelocity =
 			Translation2d(discreteChassisSpeeds.vxMetersPerSecond, discreteChassisSpeeds.vyMetersPerSecond).rotateBy(
-				-heading)
+				heading)
 		val robotRelativeSpeeds = ChassisSpeeds(
 			moduleTranslationVelocity.x,
 			moduleTranslationVelocity.y,
