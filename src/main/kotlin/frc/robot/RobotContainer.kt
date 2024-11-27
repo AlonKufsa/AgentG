@@ -34,10 +34,11 @@ object RobotContainer {
 	}
 
 	private fun configureDefaultCommands() {
-		SwerveSubsystem.defaultCommand = SwerveSubsystem.driveAngularVelocity(
-			{ -simpleDeadband(mainController.leftY, DEADBAND) },
+		SwerveSubsystem.defaultCommand = SwerveSubsystem.angularVelocityDriveCommand(
+			{ simpleDeadband(mainController.leftY, DEADBAND) },
 			{ simpleDeadband(mainController.leftX, DEADBAND) },
-			{ simpleDeadband(mainController.rightX, DEADBAND) }
+			{ simpleDeadband(mainController.rightX, DEADBAND) },
+			true,
 		)
 	}
 

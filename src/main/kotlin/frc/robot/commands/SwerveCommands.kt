@@ -7,10 +7,11 @@ import frc.robot.subsystems.swerve.SwerveConstants
 import frc.robot.subsystems.swerve.SwerveSubsystem
 import kotlin.math.pow
 
-fun SwerveSubsystem.driveAngularVelocity(
+fun SwerveSubsystem.angularVelocityDriveCommand(
 	lJoyYSupplier: () -> Double,
 	lJoyXSupplier: () -> Double,
 	rJoyXSupplier: () -> Double,
+	fieldRelative: Boolean,
 ): Command = withName("Drive with angular velocity control") {
 	run {
 		val lJoyY = lJoyYSupplier().pow(3)
@@ -19,10 +20,10 @@ fun SwerveSubsystem.driveAngularVelocity(
 
 		val chassisSpeeds = ChassisSpeeds(
 			-lJoyY * SwerveConstants.MAX_SPEED_MPS,
-			-lJoyX * SwerveConstants.MAX_SPEED_MPS,
+			lJoyX * SwerveConstants.MAX_SPEED_MPS,
 			-rJoyX * SwerveConstants.MAX_ANGULAR_VELOCITY.asRadPs
 		)
-		drive(true, chassisSpeeds)
+		drive(fieldRelative, chassisSpeeds)
 	} finallyDo {
 		resetModules()
 	}
