@@ -139,6 +139,6 @@ object SwerveConstants {
 		ROTATION_PID_GAINS,
 		MAX_SPEED_MPS,
 		DRIVEBASE_RADIUS.asMeters,
-		ReplanningConfig()
+		ReplanningConfig(),
 	)
 }

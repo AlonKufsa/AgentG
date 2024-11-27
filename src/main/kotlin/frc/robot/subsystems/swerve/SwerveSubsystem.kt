@@ -37,7 +37,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		canCoderConfigs = Constants.canCoderConfigs("FrontRight"),
 		wheelRadius = Constants.WHEEL_RADIUS,
 		moduleName = "FrontRight",
-		Constants.SWERVE_CAN_BUS
+		Constants.SWERVE_CAN_BUS,
 	)
 	private val frontLeft = SwerveModule(
 		driveMotorID = Map.FrontLeft.DRIVE_MOTOR_ID,
@@ -51,7 +51,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		canCoderConfigs = Constants.canCoderConfigs("FrontLeft"),
 		wheelRadius = Constants.WHEEL_RADIUS,
 		moduleName = "FrontLeft",
-		Constants.SWERVE_CAN_BUS
+		Constants.SWERVE_CAN_BUS,
 	)
 	private val backLeft = SwerveModule(
 		driveMotorID = Map.BackLeft.DRIVE_MOTOR_ID,
@@ -65,7 +65,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		canCoderConfigs = Constants.canCoderConfigs("BackLeft"),
 		wheelRadius = Constants.WHEEL_RADIUS,
 		moduleName = "BackLeft",
-		Constants.SWERVE_CAN_BUS
+		Constants.SWERVE_CAN_BUS,
 	)
 	private val backRight = SwerveModule(
 		driveMotorID = Map.BackRight.DRIVE_MOTOR_ID,
@@ -79,7 +79,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		canCoderConfigs = Constants.canCoderConfigs("BackRight"),
 		wheelRadius = Constants.WHEEL_RADIUS,
 		moduleName = "BackRight",
-		Constants.SWERVE_CAN_BUS
+		Constants.SWERVE_CAN_BUS,
 	)
 	private val pigeon = Pigeon2(Map.PIGEON_2_ID, Constants.SWERVE_CAN_BUS).apply {
 		configurator.apply(Constants.pigeonConfigs)
@@ -89,19 +89,20 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		Translation2d(Constants.MODULE_OFFSET.asMeters, Constants.MODULE_OFFSET.asMeters),
 		Translation2d(-Constants.MODULE_OFFSET.asMeters, Constants.MODULE_OFFSET.asMeters),
 		Translation2d(-Constants.MODULE_OFFSET.asMeters, -Constants.MODULE_OFFSET.asMeters),
-		Translation2d(Constants.MODULE_OFFSET.asMeters, -Constants.MODULE_OFFSET.asMeters)
+		Translation2d(Constants.MODULE_OFFSET.asMeters, -Constants.MODULE_OFFSET.asMeters),
 	)
 	private val poseEstimator = SwerveDrivePoseEstimator(
 		swerveKinematics,
 		angle,
 		currentSwervePositionsArray,
-		Pose2d()
+		Pose2d(),
 	)
 	private val fieldWidget = Field2d()
+
 	val rotationPID = PIDController(
 		Constants.ROTATION_PID_GAINS.kP,
 		Constants.ROTATION_PID_GAINS.kI,
-		Constants.ROTATION_PID_GAINS.kD
+		Constants.ROTATION_PID_GAINS.kD,
 	).apply {
 		enableContinuousInput(0.0, 360.0)
 	}
@@ -110,10 +111,12 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 	private val angle: Rotation2d
 		get() = Rotation2d.fromDegrees(MathUtil.inputModulus(pigeon.rotation2d.degrees, 0.0, 360.0))
 	private val currentSwervePositionsArray: Array<SwerveModulePosition>
-		get() = arrayOf(frontRight.currentPosition,
+		get() = arrayOf(
+			frontRight.currentPosition,
 			frontLeft.currentPosition,
 			backLeft.currentPosition,
-			backRight.currentPosition)
+			backRight.currentPosition,
+		)
 	private val robotRelativeSpeeds: ChassisSpeeds
 		get() = SwerveKinematics.currentRobotRelativeChassisSpeeds
 	private val fieldRelativeSpeeds: ChassisSpeeds
@@ -124,7 +127,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 
 	enum class SwerveRotationControlState {
 		ANGULAR_VELOCITY,
-		ROTATION_SETPOINT // Chassis speed's omega is ignored and an external rotation setpoint is used
+		ROTATION_SETPOINT, // Chassis speed's omega is ignored and an external rotation setpoint is used
 	}
 
 	var swerveRotationControlState = SwerveRotationControlState.ANGULAR_VELOCITY
@@ -133,7 +136,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		OFF,
 		VISION_ONLY,
 		ODOMETRY_ONLY,
-		FULL_POSE_ESTIMATION
+		FULL_POSE_ESTIMATION,
 	}
 
 	var poseEstimationState = ODOMETRY_ONLY
@@ -148,7 +151,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 			{
 				Robot.getAlliance() == Red
 			},
-			this
+			this,
 		)
 	}
 
@@ -166,7 +169,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		poseEstimator.resetPosition(
 			Rotation2d(),
 			currentSwervePositionsArray,
-			Pose2d(pose.x, pose.y, Rotation2d())
+			Pose2d(pose.x, pose.y, Rotation2d()),
 		)
 	}
 
@@ -176,7 +179,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		poseEstimator.resetPosition(
 			newAngle,
 			currentSwervePositionsArray,
-			Pose2d(pose.x, pose.y, newAngle)
+			Pose2d(pose.x, pose.y, newAngle),
 		)
 	}
 
@@ -200,13 +203,13 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 					chassisSpeeds,
 					angle,
 					Constants.MAX_SPEED_MPS,
-					Constants.DRIVEBASE_RADIUS.asMeters
+					Constants.DRIVEBASE_RADIUS.asMeters,
 				)
 			} else {
 				SwerveKinematics.robotRelativeChassisSpeedsToModuleStates(
 					chassisSpeeds,
 					Constants.MAX_SPEED_MPS,
-					Constants.DRIVEBASE_RADIUS.asMeters
+					Constants.DRIVEBASE_RADIUS.asMeters,
 				)
 			}
 		frontRight.setModuleState(moduleStates[0])
