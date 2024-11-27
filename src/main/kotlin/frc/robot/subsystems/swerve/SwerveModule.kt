@@ -6,7 +6,6 @@ import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage
 import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.hardware.CANcoder
 import com.hamosad1657.lib.motors.HaTalonFX
-import com.hamosad1657.lib.units.AngularVelocity
 import com.hamosad1657.lib.units.Length
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
@@ -66,7 +65,7 @@ class SwerveModule(
 
 	private val wheelCircumference = wheelRadius * 2.0 * PI
 
-	val currentAngle: Rotation2d get() = Rotation2d.fromDegrees(canCoder.absolutePosition.value)
+	val currentAngle: Rotation2d get() = Rotation2d.fromRotations(canCoder.absolutePosition.value)
 	val currentSpeedMPS: Double get() = wheelCircumference.asMeters * driveMotor.velocity.value / driveTransmission
 	val currentPosition: SwerveModulePosition
 		get() = SwerveModulePosition(wheelCircumference.asMeters * driveMotor.position.value / driveTransmission,
