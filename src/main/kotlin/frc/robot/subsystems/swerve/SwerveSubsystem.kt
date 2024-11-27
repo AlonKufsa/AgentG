@@ -99,10 +99,10 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 	)
 	private val fieldWidget = Field2d()
 
-	val rotationPID = PIDController(
-		Constants.ROTATION_PID_GAINS.kP,
-		Constants.ROTATION_PID_GAINS.kI,
-		Constants.ROTATION_PID_GAINS.kD,
+	private val chassisRotationPID = PIDController(
+		Constants.CHASSIS_ROTATION_SETPOINT_PID_GAINS.kP,
+		Constants.CHASSIS_ROTATION_SETPOINT_PID_GAINS.kI,
+		Constants.CHASSIS_ROTATION_SETPOINT_PID_GAINS.kD,
 	).apply {
 		enableContinuousInput(0.0, 360.0)
 	}
@@ -195,7 +195,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 	// Drive
 	fun drive(fieldRelative: Boolean, chassisSpeeds: ChassisSpeeds) {
 		if (swerveRotationControlState == ROTATION_SETPOINT) {
-			chassisSpeeds.omegaRadiansPerSecond = rotationPID.calculate(angle.degrees)
+			chassisSpeeds.omegaRadiansPerSecond = chassisRotationPID.calculate(angle.degrees)
 		}
 		val moduleStates =
 			if (fieldRelative) {

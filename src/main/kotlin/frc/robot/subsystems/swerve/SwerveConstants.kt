@@ -34,7 +34,7 @@ object SwerveConstants {
 	const val STEER_MM_ACCELERATION = 100.0
 	const val STEER_MM_CRUISE_VELOCITY = 100.0
 
-	val ROTATION_SETPOINT_PID_GAINS = PIDGains(
+	val CHASSIS_ROTATION_SETPOINT_PID_GAINS = PIDGains(
 		kP = 0.0,
 		kI = 0.0,
 		kD = 0.0
