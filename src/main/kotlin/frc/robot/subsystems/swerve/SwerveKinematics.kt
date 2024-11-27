@@ -39,17 +39,18 @@ object SwerveKinematics {
 	}
 
 	/** Converts between a velocity in some direction to the module states needed to achieve it. */
-	fun robotRelativeVelocityToModuleStates(velocity: Translation2d): Array<SwerveModuleState> {
-		return Array<SwerveModuleState>(4) { SwerveModuleState(velocity.norm, velocity.angle) }
+	private fun robotRelativeVelocityToModuleStates(velocity: Translation2d): Array<SwerveModuleState> {
+		return Array(4) { SwerveModuleState(velocity.norm, velocity.angle) }
 	}
 
 	private fun moduleStateToTranslation2d(moduleState: SwerveModuleState): Translation2d {
 		return Translation2d(moduleState.speedMetersPerSecond, moduleState.angle)
 	}
 
-	/** Converts between chassis speeds and module states.
-	 *
-	 * Positive chassis speeds omega results in counterclockwise rotation.*/
+	/**
+	 * Converts between chassis speeds and module states.
+	 * Positive chassis speeds omega results in counterclockwise rotation.
+	 */
 	fun robotRelativeChassisSpeedsToModuleStates(
 		chassisSpeeds: ChassisSpeeds,
 		maxSpeedMPS: Double,
@@ -69,23 +70,22 @@ object SwerveKinematics {
 		val wantedStates = Array(4) { SwerveModuleState() }
 
 		val frontRightCombined: Translation2d =
-			moduleStateToTranslation2d(velocityModuleState[0]) + moduleStateToTranslation2d(
-				rotationModuleStates[0])
+			moduleStateToTranslation2d(velocityModuleState[0]) + moduleStateToTranslation2d(rotationModuleStates[0])
 		wantedStates[0].angle = frontRightCombined.angle
 		wantedStates[0].speedMetersPerSecond = frontRightCombined.norm
+
 		val frontLeftCombined: Translation2d =
-			moduleStateToTranslation2d(velocityModuleState[1]) + moduleStateToTranslation2d(
-				rotationModuleStates[1])
+			moduleStateToTranslation2d(velocityModuleState[1]) + moduleStateToTranslation2d(rotationModuleStates[1])
 		wantedStates[1].angle = frontLeftCombined.angle
 		wantedStates[1].speedMetersPerSecond = frontLeftCombined.norm
+
 		val backLeftCombined: Translation2d =
-			moduleStateToTranslation2d(velocityModuleState[2]) + moduleStateToTranslation2d(
-				rotationModuleStates[2])
+			moduleStateToTranslation2d(velocityModuleState[2]) + moduleStateToTranslation2d(rotationModuleStates[2])
 		wantedStates[2].angle = backLeftCombined.angle
 		wantedStates[2].speedMetersPerSecond = backLeftCombined.norm
+
 		val backRightCombined: Translation2d =
-			moduleStateToTranslation2d(velocityModuleState[3]) + moduleStateToTranslation2d(
-				rotationModuleStates[3])
+			moduleStateToTranslation2d(velocityModuleState[3]) + moduleStateToTranslation2d(rotationModuleStates[3])
 		wantedStates[3].angle = backRightCombined.angle
 		wantedStates[3].speedMetersPerSecond = backRightCombined.norm
 
@@ -115,26 +115,27 @@ object SwerveKinematics {
 		val moduleTranslationVelocity =
 			Translation2d(discreteChassisSpeeds.vxMetersPerSecond, discreteChassisSpeeds.vyMetersPerSecond).rotateBy(
 				-heading)
-		val robotRelativeSpeeds = ChassisSpeeds(moduleTranslationVelocity.x,
+		val robotRelativeSpeeds = ChassisSpeeds(
+			moduleTranslationVelocity.x,
 			moduleTranslationVelocity.y,
-			discreteChassisSpeeds.omegaRadiansPerSecond)
+			discreteChassisSpeeds.omegaRadiansPerSecond
+		)
 		return robotRelativeChassisSpeedsToModuleStates(robotRelativeSpeeds, maxSpeedMPS, driveBaseRadiusMeters)
 	}
 
-	fun factorModuleStates(maxSpeedMPS: Double, moduleStates: Array<SwerveModuleState>): Array<SwerveModuleState> {
-		if (max(max(moduleStates[0].speedMetersPerSecond, moduleStates[1].speedMetersPerSecond),
-				max(moduleStates[2].speedMetersPerSecond, moduleStates[3].speedMetersPerSecond))
-			> maxSpeedMPS && maxSpeedMPS != 0.0
-		) {
-			val highestModuleSpeed =
-				max(max(moduleStates[0].speedMetersPerSecond, moduleStates[1].speedMetersPerSecond),
-					max(moduleStates[2].speedMetersPerSecond, moduleStates[3].speedMetersPerSecond))
-			val factor = maxSpeedMPS / highestModuleSpeed
+	private fun factorModuleStates(
+		maxSpeedMPS: Double,
+		moduleStates: Array<SwerveModuleState>,
+	): Array<SwerveModuleState> {
+		val highestVelocity = max(max(moduleStates[0].speedMetersPerSecond, moduleStates[1].speedMetersPerSecond),
+			max(moduleStates[2].speedMetersPerSecond, moduleStates[3].speedMetersPerSecond))
+		if (highestVelocity > maxSpeedMPS && maxSpeedMPS != 0.0) {
 
-			moduleStates[0].speedMetersPerSecond *= factor
-			moduleStates[1].speedMetersPerSecond *= factor
-			moduleStates[2].speedMetersPerSecond *= factor
-			moduleStates[3].speedMetersPerSecond *= factor
+			val factor = maxSpeedMPS / highestVelocity
+
+			for (state in moduleStates) {
+				state.speedMetersPerSecond *= factor
+			}
 		}
 		return moduleStates
 	}
