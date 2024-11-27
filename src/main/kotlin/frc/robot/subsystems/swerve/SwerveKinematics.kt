@@ -58,14 +58,15 @@ object SwerveKinematics {
 		val discreteChassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, 0.02)
 		currentRobotRelativeChassisSpeeds = discreteChassisSpeeds
 
-		val velocity = Translation2d(discreteChassisSpeeds.vyMetersPerSecond, discreteChassisSpeeds.vxMetersPerSecond)
+		val moduleTranslationVelocity =
+			Translation2d(discreteChassisSpeeds.vyMetersPerSecond, discreteChassisSpeeds.vxMetersPerSecond)
 
-		val velocityModuleState = robotRelativeVelocityToModuleStates(velocity)
+		val velocityModuleState = robotRelativeVelocityToModuleStates(moduleTranslationVelocity)
 		val rotationModuleStates =
 			angularVelocityToModuleStates(AngularVelocity.fromRadPs(discreteChassisSpeeds.omegaRadiansPerSecond),
 				driveBaseRadiusMeters)
 
-		val wantedStates = Array<SwerveModuleState>(4) { SwerveModuleState() }
+		val wantedStates = Array(4) { SwerveModuleState() }
 
 		val frontRightCombined: Translation2d =
 			moduleStateToTranslation2d(velocityModuleState[0]) + moduleStateToTranslation2d(
@@ -111,10 +112,12 @@ object SwerveKinematics {
 		val discreteChassisSpeeds = ChassisSpeeds.discretize(chassisSpeeds, 0.02)
 		currentFieldRelativeChassisSpeeds = discreteChassisSpeeds
 
-		val velocity =
+		val moduleTranslationVelocity =
 			Translation2d(discreteChassisSpeeds.vxMetersPerSecond, discreteChassisSpeeds.vyMetersPerSecond).rotateBy(
 				-heading)
-		val robotRelativeSpeeds = ChassisSpeeds(velocity.x, velocity.y, discreteChassisSpeeds.omegaRadiansPerSecond)
+		val robotRelativeSpeeds = ChassisSpeeds(moduleTranslationVelocity.x,
+			moduleTranslationVelocity.y,
+			discreteChassisSpeeds.omegaRadiansPerSecond)
 		return robotRelativeChassisSpeedsToModuleStates(robotRelativeSpeeds, maxSpeedMPS, driveBaseRadiusMeters)
 	}
 
