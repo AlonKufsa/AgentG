@@ -7,31 +7,29 @@ import com.ctre.phoenix6.controls.MotionMagicVoltage
 import com.ctre.phoenix6.hardware.CANcoder
 import com.hamosad1657.lib.motors.HaTalonFX
 import com.hamosad1657.lib.units.AngularVelocity
+import com.hamosad1657.lib.units.Length
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.SwerveModulePosition
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.util.sendable.SendableBuilder
 import kotlin.math.PI
 
-/** Drive motor ID - The ID of the drive motor.
+/**
+ * @param driveMotorID - The ID of the drive motor.
+ * @param driveMotorConfigs - The talonFX configs of your drive motor.
+ * @param invertedDrive - Whether the drive motor should have it's movement inverted.
+ * @param driveTransmission - The amount of turns the drive motor does for every wheel rotation
  *
- * Drive motor configs - The talonFX configs of your drive motor.
+ * @param steerMotorID - The ID of the steer motor.
+ * @param steerMotorConfigs - The talonFX configs of your steer motor.
+ * @param invertedSteer - Weather the steer motor should have it's movement inverted.
  *
- * Inverted drive - Weather the drive motor should have it's movement inverted.
+ * @param canCoderID - The ID of the wheel angle CAN coder.
+ * @param canCoderConfigs - the configs of the wheel angle CAN coder.
  *
- * Drive transmission - The amount of turns the drive motor does for every wheel rotation
- *
- *
- * Steer motor ID - The ID of the steer motor.
- *
- * Steer motor configs - The talonFX configs of your steer motor.
- *
- * Inverted steer - Weather the steer motor should have it's movement inverted.
- *
- *
- * CAN coder ID - The ID of the wheel angle CAN coder.
- *
- * CAN coder configs - the configs of the wheel angle CAN coder.
+ * @param wheelRadius - The radius of the wheel
+ * @param moduleName - The name of the module (FrontRight, BackLeft...)
+ * @param canBusName - The name of the CANBus network used for the module
  *  */
 class SwerveModule(
 	private val driveMotorID: Int,
@@ -46,77 +44,55 @@ class SwerveModule(
 	private val canCoderID: Int,
 	private val canCoderConfigs: CANcoderConfiguration,
 
-	private val wheelRadiusMeters: Double,
-
+	wheelRadius: Length,
 	private val moduleName: String,
-
-	private val canbusNetwork: String,
+	private val canBusName: String,
 ) {
-	private val driveMotor = HaTalonFX(driveMotorID, canbusNetwork).apply {
+	private val driveMotor = HaTalonFX(driveMotorID, canBusName).apply {
 		restoreFactoryDefaults()
 		inverted = invertedDrive
 		configurator.apply(driveMotorConfigs)
 	}
 
-	private val steerMotor = HaTalonFX(steerMotorID, canbusNetwork).apply {
+	private val steerMotor = HaTalonFX(steerMotorID, canBusName).apply {
 		restoreFactoryDefaults()
 		inverted = invertedSteer
 		configurator.apply(steerMotorConfigs)
 	}
 
-	private val canCoder = CANcoder(canCoderID, canbusNetwork).apply {
+	private val canCoder = CANcoder(canCoderID, canBusName).apply {
 		configurator.apply(canCoderConfigs)
 	}
 
-	private val wheelCircumferenceMeters = wheelRadiusMeters * 2 * PI
+	private val wheelCircumference = wheelRadius * 2.0 * PI
 
-	val angle: Rotation2d get() = Rotation2d.fromDegrees(canCoder.absolutePosition.value)
-	val speedMPS: Double get() = wheelCircumferenceMeters * driveMotor.velocity.value / driveTransmission
-	val position: SwerveModulePosition
-		get() = SwerveModulePosition(wheelCircumferenceMeters * driveMotor.position.value / driveTransmission, angle)
+	val currentAngle: Rotation2d get() = Rotation2d.fromDegrees(canCoder.absolutePosition.value)
+	val currentSpeedMPS: Double get() = wheelCircumference.asMeters * driveMotor.velocity.value / driveTransmission
+	val currentPosition: SwerveModulePosition
+		get() = SwerveModulePosition(wheelCircumference.asMeters * driveMotor.position.value / driveTransmission,
+			currentAngle)
 
-	/** The module's angle setpoint.
-	 *
-	 * Automatically updates the motor's feedback control. */
 	private var angleSetpoint: Rotation2d = Rotation2d()
-		private set(value) {
-			controlRequestSteerAngle.Position = value.rotations
-			steerMotor.setControl(controlRequestSteerAngle)
-			field = value
-		}
-
-	/** The module's speed setpoint in meters per second.
-	 *
-	 * Automatically updates the motor's feedback control. */
 	private var speedSetpointMPS: Double = 0.0
-		set(value) {
-			angularVelocitySetpoint = AngularVelocity.fromRps(value / wheelCircumferenceMeters * driveTransmission)
-			field = value
-		}
-
-	/** The angular velocity setpoint of the drive motor. */
-	private var angularVelocitySetpoint = AngularVelocity.fromRps(0.0)
-		private set(value) {
-			controlRequestDriveVelocity.Velocity = value.asRps
-			driveMotor.setControl(controlRequestDriveVelocity)
-			field = value
-		}
 
 	private var controlRequestDriveVelocity = MotionMagicVelocityVoltage(0.0)
 	private var controlRequestSteerAngle = MotionMagicVoltage(0.0).apply {
-		EnableFOC = true
 		Slot = 0
 		LimitForwardMotion = false
 		LimitReverseMotion = false
 	}
 
-	// Functions
-	fun setModuleSpeedMPS(speedMPS: Double) {
+
+	private fun setModuleSpeedMPS(speedMPS: Double) {
 		speedSetpointMPS = speedMPS
+		controlRequestDriveVelocity.Velocity = speedMPS / wheelCircumference.asMeters * driveTransmission
+		driveMotor.setControl(controlRequestDriveVelocity)
 	}
 
-	fun setModuleAngle(angle: Rotation2d) {
+	private fun setModuleAngle(angle: Rotation2d) {
 		angleSetpoint = angle
+		controlRequestSteerAngle.Position = angle.rotations
+		steerMotor.setControl(controlRequestSteerAngle)
 	}
 
 	fun setModuleState(state: SwerveModuleState) {
@@ -126,8 +102,8 @@ class SwerveModule(
 
 	// Logging
 	fun sendModuleInfo(builder: SendableBuilder) {
-		builder.addDoubleProperty("$moduleName rotation deg", { angle.degrees }, null)
-		builder.addDoubleProperty("$moduleName speed MPS", { speedMPS }, null)
+		builder.addDoubleProperty("$moduleName rotation deg", { currentAngle.degrees }, null)
+		builder.addDoubleProperty("$moduleName speed MPS", { currentSpeedMPS }, null)
 
 		builder.addDoubleProperty("$moduleName rotation setpoint deg", { angleSetpoint.degrees }, null)
 		builder.addDoubleProperty("$moduleName speed setpoint MPS", { speedSetpointMPS }, null)

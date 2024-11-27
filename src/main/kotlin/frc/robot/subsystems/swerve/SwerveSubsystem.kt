@@ -35,7 +35,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		invertedSteer = false,
 		canCoderID = Map.FrontRight.CAN_CODER_ID,
 		canCoderConfigs = Constants.canCoderConfigs("FrontRight"),
-		wheelRadiusMeters = Constants.WHEEL_RADIUS_METERS,
+		wheelRadius = Constants.WHEEL_RADIUS,
 		moduleName = "FrontRight",
 		Constants.SWERVE_CAN_BUS
 	)
@@ -49,7 +49,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		invertedSteer = false,
 		canCoderID = Map.FrontLeft.CAN_CODER_ID,
 		canCoderConfigs = Constants.canCoderConfigs("FrontLeft"),
-		wheelRadiusMeters = Constants.WHEEL_RADIUS_METERS,
+		wheelRadius = Constants.WHEEL_RADIUS,
 		moduleName = "FrontLeft",
 		Constants.SWERVE_CAN_BUS
 	)
@@ -63,7 +63,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		invertedSteer = false,
 		canCoderID = Map.BackLeft.CAN_CODER_ID,
 		canCoderConfigs = Constants.canCoderConfigs("BackLeft"),
-		wheelRadiusMeters = Constants.WHEEL_RADIUS_METERS,
+		wheelRadius = Constants.WHEEL_RADIUS,
 		moduleName = "BackLeft",
 		Constants.SWERVE_CAN_BUS
 	)
@@ -77,7 +77,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		invertedSteer = false,
 		canCoderID = Map.BackRight.CAN_CODER_ID,
 		canCoderConfigs = Constants.canCoderConfigs("BackRight"),
-		wheelRadiusMeters = Constants.WHEEL_RADIUS_METERS,
+		wheelRadius = Constants.WHEEL_RADIUS,
 		moduleName = "BackRight",
 		Constants.SWERVE_CAN_BUS
 	)
@@ -86,10 +86,10 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 	}
 
 	private val swerveKinematics = SwerveDriveKinematics(
-		Translation2d(Constants.MODULE_OFFSET, Constants.MODULE_OFFSET),
-		Translation2d(-Constants.MODULE_OFFSET, Constants.MODULE_OFFSET),
-		Translation2d(-Constants.MODULE_OFFSET, -Constants.MODULE_OFFSET),
-		Translation2d(Constants.MODULE_OFFSET, -Constants.MODULE_OFFSET)
+		Translation2d(Constants.MODULE_OFFSET.asMeters, Constants.MODULE_OFFSET.asMeters),
+		Translation2d(-Constants.MODULE_OFFSET.asMeters, Constants.MODULE_OFFSET.asMeters),
+		Translation2d(-Constants.MODULE_OFFSET.asMeters, -Constants.MODULE_OFFSET.asMeters),
+		Translation2d(Constants.MODULE_OFFSET.asMeters, -Constants.MODULE_OFFSET.asMeters)
 	)
 	private val poseEstimator = SwerveDrivePoseEstimator(
 		swerveKinematics,
@@ -110,7 +110,10 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 	private val angle: Rotation2d
 		get() = Rotation2d.fromDegrees(MathUtil.inputModulus(pigeon.rotation2d.degrees, 0.0, 360.0))
 	private val currentSwervePositionsArray: Array<SwerveModulePosition>
-		get() = arrayOf(frontRight.position, frontLeft.position, backLeft.position, backRight.position)
+		get() = arrayOf(frontRight.currentPosition,
+			frontLeft.currentPosition,
+			backLeft.currentPosition,
+			backRight.currentPosition)
 	private val robotRelativeSpeeds: ChassisSpeeds
 		get() = SwerveKinematics.currentRobotRelativeChassisSpeeds
 	private val fieldRelativeSpeeds: ChassisSpeeds
@@ -183,7 +186,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 	}
 
 	private fun applyVisionMeasurement() {
-
+		// TODO: Implement
 	}
 
 	// Drive
@@ -197,13 +200,13 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 					chassisSpeeds,
 					angle,
 					Constants.MAX_SPEED_MPS,
-					Constants.DRIVEBASE_RADIUS_METERS
+					Constants.DRIVEBASE_RADIUS.asMeters
 				)
 			} else {
 				SwerveKinematics.robotRelativeChassisSpeedsToModuleStates(
 					chassisSpeeds,
 					Constants.MAX_SPEED_MPS,
-					Constants.DRIVEBASE_RADIUS_METERS
+					Constants.DRIVEBASE_RADIUS.asMeters
 				)
 			}
 		frontRight.setModuleState(moduleStates[0])
