@@ -28,7 +28,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 	private val frontRight = SwerveModule(
 		driveMotorID = Map.FrontRight.DRIVE_MOTOR_ID,
 		driveMotorConfigs = Constants.DRIVE_MOTOR_CONFIGS,
-		invertedDrive = false,
+		invertedDrive = true,
 		driveTransmission = Constants.DRIVE_TRANSMISSION,
 		steerMotorID = Map.FrontRight.STEER_MOTOR_ID,
 		steerMotorConfigs = Constants.steerMotorConfigs(Map.FrontRight.CANCODER_ID),
@@ -42,7 +42,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 	private val frontLeft = SwerveModule(
 		driveMotorID = Map.FrontLeft.DRIVE_MOTOR_ID,
 		driveMotorConfigs = Constants.DRIVE_MOTOR_CONFIGS,
-		invertedDrive = false,
+		invertedDrive = true,
 		driveTransmission = Constants.DRIVE_TRANSMISSION,
 		steerMotorID = Map.FrontLeft.STEER_MOTOR_ID,
 		steerMotorConfigs = Constants.steerMotorConfigs(Map.FrontLeft.CANCODER_ID),
@@ -56,7 +56,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 	private val backLeft = SwerveModule(
 		driveMotorID = Map.BackLeft.DRIVE_MOTOR_ID,
 		driveMotorConfigs = Constants.DRIVE_MOTOR_CONFIGS,
-		invertedDrive = false,
+		invertedDrive = true,
 		driveTransmission = Constants.DRIVE_TRANSMISSION,
 		steerMotorID = Map.BackLeft.STEER_MOTOR_ID,
 		steerMotorConfigs = Constants.steerMotorConfigs(Map.BackLeft.CANCODER_ID),
@@ -70,7 +70,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 	private val backRight = SwerveModule(
 		driveMotorID = Map.BackRight.DRIVE_MOTOR_ID,
 		driveMotorConfigs = Constants.DRIVE_MOTOR_CONFIGS,
-		invertedDrive = false,
+		invertedDrive = true,
 		driveTransmission = Constants.DRIVE_TRANSMISSION,
 		steerMotorID = Map.BackRight.STEER_MOTOR_ID,
 		steerMotorConfigs = Constants.steerMotorConfigs(Map.BackRight.CANCODER_ID),
