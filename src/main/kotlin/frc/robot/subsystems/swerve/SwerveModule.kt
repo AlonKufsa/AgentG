@@ -96,7 +96,7 @@ class SwerveModule(
 
 	fun setModuleState(state: SwerveModuleState) {
 		setModuleSpeedMPS(state.speedMetersPerSecond)
-		setModuleAngle(state.angle)
+		if (state.speedMetersPerSecond != 0.0) setModuleAngle(state.angle)
 	}
 
 	// Logging
