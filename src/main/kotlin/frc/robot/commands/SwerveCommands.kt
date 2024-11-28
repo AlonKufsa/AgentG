@@ -5,6 +5,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.subsystems.swerve.SwerveConstants
 import frc.robot.subsystems.swerve.SwerveSubsystem
+import frc.robot.subsystems.swerve.SwerveSubsystem.SwerveRotationControlState.ANGULAR_VELOCITY
 import kotlin.math.pow
 
 fun SwerveSubsystem.angularVelocityDriveCommand(
@@ -13,7 +14,9 @@ fun SwerveSubsystem.angularVelocityDriveCommand(
 	rJoyXSupplier: () -> Double,
 	fieldRelative: Boolean,
 ): Command = withName("Drive with angular velocity control") {
-	run {
+	runOnce {
+		swerveRotationControlState = ANGULAR_VELOCITY
+	} andThen run {
 		val lJoyY = lJoyYSupplier().pow(3)
 		val lJoyX = lJoyXSupplier().pow(3)
 		val rJoyX = rJoyXSupplier().pow(3)
