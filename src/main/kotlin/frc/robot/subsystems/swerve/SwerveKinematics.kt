@@ -69,31 +69,18 @@ object SwerveKinematics {
 
 		val wantedStates = Array(4) { SwerveModuleState() }
 
-		val frontRightCombined: Translation2d =
-			moduleStateToTranslation2d(velocityModuleState[0]) + moduleStateToTranslation2d(rotationModuleStates[0])
-		wantedStates[0].angle = frontRightCombined.angle
-		wantedStates[0].speedMetersPerSecond = frontRightCombined.norm
-
-		val frontLeftCombined: Translation2d =
-			moduleStateToTranslation2d(velocityModuleState[1]) + moduleStateToTranslation2d(rotationModuleStates[1])
-		wantedStates[1].angle = frontLeftCombined.angle
-		wantedStates[1].speedMetersPerSecond = frontLeftCombined.norm
-
-		val backLeftCombined: Translation2d =
-			moduleStateToTranslation2d(velocityModuleState[2]) + moduleStateToTranslation2d(rotationModuleStates[2])
-		wantedStates[2].angle = backLeftCombined.angle
-		wantedStates[2].speedMetersPerSecond = backLeftCombined.norm
-
-		val backRightCombined: Translation2d =
-			moduleStateToTranslation2d(velocityModuleState[3]) + moduleStateToTranslation2d(rotationModuleStates[3])
-		wantedStates[3].angle = backRightCombined.angle
-		wantedStates[3].speedMetersPerSecond = backRightCombined.norm
+		for (iN in 0..3) {
+			val combinedTranslation =
+				moduleStateToTranslation2d(velocityModuleState[iN]) + moduleStateToTranslation2d(rotationModuleStates[iN])
+			wantedStates[iN].angle = combinedTranslation.angle
+			wantedStates[iN].speedMetersPerSecond = combinedTranslation.norm
+		}
 
 		SmartDashboard.putNumberArray("Wanted module states", arrayOf(
-			frontRightCombined.angle.rotateBy(Rotation2d.fromDegrees(-90.0)).degrees, frontRightCombined.norm,
-			frontLeftCombined.angle.rotateBy(Rotation2d.fromDegrees(-90.0)).degrees, frontLeftCombined.norm,
-			backLeftCombined.angle.rotateBy(Rotation2d.fromDegrees(-90.0)).degrees, backLeftCombined.norm,
-			backRightCombined.angle.rotateBy(Rotation2d.fromDegrees(-90.0)).degrees, backRightCombined.norm
+			wantedStates[0].angle.rotateBy(Rotation2d.fromDegrees(-90.0)).degrees, wantedStates[0].speedMetersPerSecond,
+			wantedStates[1].angle.rotateBy(Rotation2d.fromDegrees(-90.0)).degrees, wantedStates[1].speedMetersPerSecond,
+			wantedStates[2].angle.rotateBy(Rotation2d.fromDegrees(-90.0)).degrees, wantedStates[2].speedMetersPerSecond,
+			wantedStates[3].angle.rotateBy(Rotation2d.fromDegrees(-90.0)).degrees, wantedStates[3].speedMetersPerSecond,
 		))
 		return factorModuleStates(maxSpeedMPS, wantedStates)
 	}
