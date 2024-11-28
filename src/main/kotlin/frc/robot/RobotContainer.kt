@@ -30,7 +30,7 @@ object RobotContainer {
 
 	/** Use this method to define your `trigger->command` mappings. */
 	private fun configureBindings() {
-
+		mainController.options().onTrue(SwerveSubsystem.resetGyroCommand())
 	}
 
 	private fun configureDefaultCommands() {

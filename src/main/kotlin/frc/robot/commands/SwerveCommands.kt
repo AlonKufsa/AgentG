@@ -19,12 +19,16 @@ fun SwerveSubsystem.angularVelocityDriveCommand(
 		val rJoyX = rJoyXSupplier().pow(3)
 
 		val chassisSpeeds = ChassisSpeeds(
-			-lJoyY * SwerveConstants.MAX_SPEED_MPS,
-			lJoyX * SwerveConstants.MAX_SPEED_MPS,
-			-rJoyX * SwerveConstants.MAX_ANGULAR_VELOCITY.asRadPs
+			lJoyY * SwerveConstants.MAX_SPEED_MPS,
+			-lJoyX * SwerveConstants.MAX_SPEED_MPS,
+			rJoyX * SwerveConstants.MAX_ANGULAR_VELOCITY.asRadPs
 		)
 		drive(fieldRelative, chassisSpeeds)
 	} finallyDo {
 		resetModules()
 	}
+}
+
+fun SwerveSubsystem.resetGyroCommand(): Command = withName("Reset gyro") {
+	runOnce { resetGyro() }
 }
