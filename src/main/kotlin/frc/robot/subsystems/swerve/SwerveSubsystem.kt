@@ -184,7 +184,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 	}
 
 	// Pose estimation
-	private fun resetOdometry(pose: Pose2d) {
+	fun resetOdometry(pose: Pose2d) {
 		poseEstimator.resetPosition(angle, currentSwervePositionsArray, pose)
 	}
 
@@ -194,6 +194,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 
 	// Drive
 	fun drive(fieldRelative: Boolean, chassisSpeeds: ChassisSpeeds) {
+		chassisRotationPID.setpoint = rotationSetpoint.degrees
 		if (swerveRotationControlState == ROTATION_SETPOINT) {
 			chassisSpeeds.omegaRadiansPerSecond = chassisRotationPID.calculate(angle.degrees)
 		}
