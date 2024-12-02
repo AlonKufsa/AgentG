@@ -8,7 +8,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import frc.robot.commands.*
 import frc.robot.subsystems.swerve.SwerveSubsystem
 
-fun ExampleModeAutoCommand(): Command = withName("ExampleMode auto") {
+fun exampleModeAutoCommand(): Command = withName("ExampleMode auto") {
 	SequentialCommandGroup(
 		SwerveSubsystem.followPathCommand(PathPlannerPath.fromPathFile("Example Path")),
 		SwerveSubsystem.followPathWithRotationSetpointCommand(
