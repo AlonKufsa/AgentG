@@ -2,16 +2,15 @@ package frc.robot.commands
 
 import com.hamosad1657.lib.commands.*
 import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.controllers.PPHolonomicDriveController
 import com.pathplanner.lib.path.PathPlannerPath
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup
 import frc.robot.subsystems.swerve.SwerveConstants
 import frc.robot.subsystems.swerve.SwerveSubsystem
-import frc.robot.subsystems.swerve.SwerveSubsystem.SwerveRotationControlState.ANGULAR_VELOCITY
-import frc.robot.subsystems.swerve.SwerveSubsystem.SwerveRotationControlState.ROTATION_SETPOINT
+import java.util.Optional
 import kotlin.math.pow
 
 fun SwerveSubsystem.angularVelocityDriveCommand(
@@ -20,9 +19,7 @@ fun SwerveSubsystem.angularVelocityDriveCommand(
 	rJoyXSupplier: () -> Double,
 	fieldRelative: Boolean,
 ): Command = withName("Drive with angular velocity control") {
-	runOnce {
-		swerveRotationControlState = ANGULAR_VELOCITY
-	} andThen run {
+	run {
 		val lJoyY = lJoyYSupplier().pow(3)
 		val lJoyX = lJoyXSupplier().pow(3)
 		val rJoyX = rJoyXSupplier().pow(3)
@@ -44,9 +41,7 @@ fun SwerveSubsystem.rotationSetpointDriveCommand(
 	rotationSetpointInput: () -> Rotation2d,
 	fieldRelative: Boolean,
 ): Command = withName("Drive with angular velocity control") {
-	runOnce {
-		swerveRotationControlState = ROTATION_SETPOINT
-	} andThen run {
+	run {
 		val lJoyY = lJoyYSupplier().pow(3)
 		val lJoyX = lJoyXSupplier().pow(3)
 
@@ -57,7 +52,11 @@ fun SwerveSubsystem.rotationSetpointDriveCommand(
 			-lJoyX * SwerveConstants.MAX_SPEED_MPS,
 			0.0,
 		)
-		drive(fieldRelative, chassisSpeeds)
+		driveRotationSetpoint(
+			fieldRelative,
+			chassisSpeeds.vxMetersPerSecond,
+			chassisSpeeds.vyMetersPerSecond,
+		)
 	} finallyDo {
 		resetModules()
 	}
@@ -69,19 +68,20 @@ fun SwerveSubsystem.followPathWithRotationSetpointCommand(
 	path: PathPlannerPath,
 	rotationSetpointInput: () -> Rotation2d,
 ): Command {
-	swerveRotationControlState = ROTATION_SETPOINT
+	PPHolonomicDriveController.setRotationTargetOverride {
+		Optional.of(rotationSetpointInput())
+	}
 	return withName("Follow path with rotation setpoint") {
-		ParallelCommandGroup(
-			run { rotationSetpoint = rotationSetpointInput() },
-			followPathCommand(path),
-		) finallyDo {
-			swerveRotationControlState = ANGULAR_VELOCITY
+		followPathCommand(path)
+	} finallyDo {
+		PPHolonomicDriveController.setRotationTargetOverride {
+			Optional.ofNullable(null)
 		}
 	}
 }
 
 fun SwerveSubsystem.resetOdometryCommand(pose: Pose2d): Command = withName("Reset odometry") {
-	runOnce { resetOdometry(pose) }
+	runOnce { resetPoseEstimation(pose) }
 }
 
 fun SwerveSubsystem.resetGyroCommand(): Command = withName("Reset gyro") {

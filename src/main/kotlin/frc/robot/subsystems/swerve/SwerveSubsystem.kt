@@ -1,9 +1,9 @@
 package frc.robot.subsystems.swerve
 
 import com.ctre.phoenix6.hardware.Pigeon2
+import com.hamosad1657.lib.robotPrint
 import com.pathplanner.lib.auto.AutoBuilder
 import edu.wpi.first.math.MathUtil
-import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
@@ -18,12 +18,36 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.Robot
-import frc.robot.subsystems.swerve.SwerveSubsystem.PoseEstimationState.*
-import frc.robot.subsystems.swerve.SwerveSubsystem.SwerveRotationControlState.ROTATION_SETPOINT
+import frc.robot.subsystems.swerve.PoseEstimationMode.*
+import frc.robot.subsystems.swerve.SwerveConstants.ModuleOffset.*
 import frc.robot.RobotMap.SwerveMap as Map
 import frc.robot.subsystems.swerve.SwerveConstants as Constants
 
 object SwerveSubsystem : SubsystemBase("Swerve") {
+	init {
+		AutoBuilder.configureHolonomic(
+			{ estimatedPose },
+			this::resetPoseEstimation,
+			{ robotRelativeSpeeds },
+			{ speeds: ChassisSpeeds -> drive(false, speeds) },
+			Constants.PP_CONFIGS,
+			{
+				Robot.getAlliance() == Red
+			},
+			this,
+		)
+	}
+
+	var poseEstimationState = ODOMETRY_ONLY
+		set(value) {
+			if (field != value) {
+				robotPrint("poseEstimation state changed to: ${value.name}")
+			}
+			field = value
+		}
+	var rotationSetpoint = Rotation2d()
+
+
 	// FR, FL, BL, BR
 	private val frontRight = SwerveModule(
 		driveMotorID = Map.FrontRight.DRIVE_MOTOR_ID,
@@ -34,7 +58,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		steerMotorConfigs = Constants.steerMotorConfigs(Map.FrontRight.CANCODER_ID),
 		invertedSteer = false,
 		canCoderID = Map.FrontRight.CANCODER_ID,
-		canCoderConfigs = Constants.canCoderConfigs("FrontRight"),
+		canCoderConfigs = Constants.canCoderConfigs(FRONT_RIGHT),
 		wheelRadius = Constants.WHEEL_RADIUS,
 		moduleName = "FrontRight",
 		Constants.SWERVE_CAN_BUS,
@@ -48,7 +72,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		steerMotorConfigs = Constants.steerMotorConfigs(Map.FrontLeft.CANCODER_ID),
 		invertedSteer = false,
 		canCoderID = Map.FrontLeft.CANCODER_ID,
-		canCoderConfigs = Constants.canCoderConfigs("FrontLeft"),
+		canCoderConfigs = Constants.canCoderConfigs(FRONT_LEFT),
 		wheelRadius = Constants.WHEEL_RADIUS,
 		moduleName = "FrontLeft",
 		Constants.SWERVE_CAN_BUS,
@@ -62,7 +86,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		steerMotorConfigs = Constants.steerMotorConfigs(Map.BackLeft.CANCODER_ID),
 		invertedSteer = false,
 		canCoderID = Map.BackLeft.CANCODER_ID,
-		canCoderConfigs = Constants.canCoderConfigs("BackLeft"),
+		canCoderConfigs = Constants.canCoderConfigs(BACK_LEFT),
 		wheelRadius = Constants.WHEEL_RADIUS,
 		moduleName = "BackLeft",
 		Constants.SWERVE_CAN_BUS,
@@ -76,7 +100,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		steerMotorConfigs = Constants.steerMotorConfigs(Map.BackRight.CANCODER_ID),
 		invertedSteer = false,
 		canCoderID = Map.BackRight.CANCODER_ID,
-		canCoderConfigs = Constants.canCoderConfigs("BackRight"),
+		canCoderConfigs = Constants.canCoderConfigs(BACK_RIGHT),
 		wheelRadius = Constants.WHEEL_RADIUS,
 		moduleName = "BackRight",
 		Constants.SWERVE_CAN_BUS,
@@ -93,24 +117,22 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 	)
 	private val poseEstimator = SwerveDrivePoseEstimator(
 		swerveKinematics,
-		angle,
-		currentSwervePositionsArray,
+		gyroAngle,
+		currentModulePositions,
 		Pose2d(),
 	)
 	private val fieldWidget = Field2d()
 
-	private val chassisRotationPID = PIDController(
-		Constants.CHASSIS_ROTATION_SETPOINT_PID_GAINS.kP,
-		Constants.CHASSIS_ROTATION_SETPOINT_PID_GAINS.kI,
-		Constants.CHASSIS_ROTATION_SETPOINT_PID_GAINS.kD,
-	).apply {
+	/**
+	 * Uses degrees
+	 */
+	private val chassisRotationPID = Constants.CHASSIS_ROTATION_SETPOINT_PID_GAINS.toPIDController().apply {
 		enableContinuousInput(0.0, 360.0)
 	}
-	var rotationSetpoint = Rotation2d()
 
-	private val angle: Rotation2d
+	private val gyroAngle: Rotation2d
 		get() = Rotation2d.fromDegrees(MathUtil.inputModulus(pigeon.rotation2d.degrees, 0.0, 360.0))
-	private val currentSwervePositionsArray: Array<SwerveModulePosition>
+	private val currentModulePositions: Array<SwerveModulePosition>
 		get() = arrayOf(
 			frontRight.currentPosition,
 			frontLeft.currentPosition,
@@ -125,36 +147,6 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		get() = poseEstimator.estimatedPosition
 
 
-	enum class SwerveRotationControlState {
-		ANGULAR_VELOCITY,
-		ROTATION_SETPOINT, // Chassis speed's omega is ignored and an external rotation setpoint is used
-	}
-
-	var swerveRotationControlState = SwerveRotationControlState.ANGULAR_VELOCITY
-
-	enum class PoseEstimationState {
-		OFF,
-		VISION_ONLY,
-		ODOMETRY_ONLY,
-		FULL_POSE_ESTIMATION,
-	}
-
-	var poseEstimationState = ODOMETRY_ONLY
-
-	init {
-		AutoBuilder.configureHolonomic(
-			{ estimatedPose },
-			this::resetOdometry,
-			{ robotRelativeSpeeds },
-			{ speeds: ChassisSpeeds -> drive(false, speeds) },
-			Constants.PP_CONFIGS,
-			{
-				Robot.getAlliance() == Red
-			},
-			this,
-		)
-	}
-
 	fun resetModules() {
 		frontRight.setModuleState(SwerveModuleState())
 		frontLeft.setModuleState(SwerveModuleState())
@@ -168,7 +160,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		pigeon.reset()
 		poseEstimator.resetPosition(
 			Rotation2d(),
-			currentSwervePositionsArray,
+			currentModulePositions,
 			Pose2d(pose.x, pose.y, Rotation2d()),
 		)
 	}
@@ -178,14 +170,21 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		pigeon.setYaw(newAngle.degrees)
 		poseEstimator.resetPosition(
 			newAngle,
-			currentSwervePositionsArray,
+			currentModulePositions,
 			Pose2d(pose.x, pose.y, newAngle),
 		)
 	}
 
 	// Pose estimation
-	fun resetOdometry(pose: Pose2d) {
-		poseEstimator.resetPosition(angle, currentSwervePositionsArray, pose)
+	private fun updateOdometry() {
+		poseEstimator.update(
+			gyroAngle,
+			currentModulePositions,
+		)
+	}
+
+	fun resetPoseEstimation(newPose: Pose2d) {
+		poseEstimator.resetPosition(gyroAngle, currentModulePositions, newPose)
 	}
 
 	private fun applyVisionMeasurement() {
@@ -194,15 +193,11 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 
 	// Drive
 	fun drive(fieldRelative: Boolean, chassisSpeeds: ChassisSpeeds) {
-		chassisRotationPID.setpoint = rotationSetpoint.degrees
-		if (swerveRotationControlState == ROTATION_SETPOINT) {
-			chassisSpeeds.omegaRadiansPerSecond = chassisRotationPID.calculate(angle.degrees)
-		}
 		val moduleStates =
 			if (fieldRelative) {
 				SwerveKinematics.fieldRelativeChassisSpeedsToModuleStates(
 					chassisSpeeds,
-					angle,
+					gyroAngle,
 					Constants.MAX_SPEED_MPS,
 					Constants.DRIVEBASE_RADIUS.asMeters,
 				)
@@ -219,17 +214,33 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		backRight.setModuleState(moduleStates[3])
 	}
 
+	fun driveRotationSetpoint(fieldRelative: Boolean, vxMPS: Double, vyMPS: Double) {
+		val chassisSpeeds = ChassisSpeeds(
+			vxMPS,
+			vyMPS,
+			chassisRotationPID.calculate(gyroAngle.degrees, rotationSetpoint.degrees),
+		)
+		drive(fieldRelative, chassisSpeeds)
+	}
+
 	// Periodic
 	override fun periodic() {
 		// Pose estimation
-		if (poseEstimationState == FULL_POSE_ESTIMATION || poseEstimationState == ODOMETRY_ONLY) {
-			poseEstimator.update(
-				angle,
-				currentSwervePositionsArray,
-			)
-		}
-		if (poseEstimationState == FULL_POSE_ESTIMATION || poseEstimationState == VISION_ONLY) {
-			applyVisionMeasurement()
+		when (poseEstimationState) {
+			ODOMETRY_ONLY -> {
+				updateOdometry()
+			}
+
+			VISION_ONLY -> {
+				applyVisionMeasurement()
+			}
+
+			FULL_POSE_ESTIMATION -> {
+				updateOdometry()
+				applyVisionMeasurement()
+			}
+
+			else -> {}
 		}
 		fieldWidget.robotPose = estimatedPose
 	}
@@ -241,7 +252,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		backLeft.sendModuleInfo(builder)
 		backRight.sendModuleInfo(builder)
 
-		builder.addDoubleProperty("Robot heading deg", { angle.degrees }, null)
+		builder.addDoubleProperty("Robot heading deg", { gyroAngle.degrees }, null)
 
 		SmartDashboard.putData(fieldWidget)
 	}

@@ -10,7 +10,6 @@ import frc.robot.subsystems.swerve.SwerveSubsystem
 
 fun exampleModeAutoCommand(): Command = withName("ExampleMode auto") {
 	SequentialCommandGroup(
-
 		SwerveSubsystem.followPathCommand(PathPlannerPath.fromPathFile("Example Path")),
 
 		SwerveSubsystem.followPathWithRotationSetpointCommand(

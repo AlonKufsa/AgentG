@@ -13,11 +13,24 @@ import com.pathplanner.lib.util.HolonomicPathFollowerConfig
 import com.pathplanner.lib.util.PIDConstants
 import com.pathplanner.lib.util.ReplanningConfig
 import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.wpilibj.DriverStation
 import kotlin.math.PI
 import kotlin.math.sqrt
 
+enum class PoseEstimationMode {
+	OFF,
+	VISION_ONLY,
+	ODOMETRY_ONLY,
+	FULL_POSE_ESTIMATION,
+}
+
 object SwerveConstants {
+	enum class ModuleOffset(val offset: Rotation2d) {
+		FRONT_RIGHT(Rotation2d.fromDegrees(0.0)),
+		FRONT_LEFT(Rotation2d.fromDegrees(0.0)),
+		BACK_LEFT(Rotation2d.fromDegrees(0.0)),
+		BACK_RIGHT(Rotation2d.fromDegrees(0.0)),
+	}
+
 	const val SWERVE_CAN_BUS = "SwerveBus"
 
 	val DRIVE_PID_GAINS = PIDGains(kP = 0.09)
@@ -37,7 +50,7 @@ object SwerveConstants {
 	val CHASSIS_ROTATION_SETPOINT_PID_GAINS = PIDGains(
 		kP = 0.0,
 		kI = 0.0,
-		kD = 0.0
+		kD = 0.0,
 	)
 
 	val WHEEL_RADIUS = Length.fromMeters(0.0508)
@@ -114,16 +127,10 @@ object SwerveConstants {
 
 	}
 
-	fun canCoderConfigs(moduleName: String): CANcoderConfiguration = CANcoderConfiguration().apply {
+	fun canCoderConfigs(moduleOffset: ModuleOffset): CANcoderConfiguration = CANcoderConfiguration().apply {
 		with(MagnetSensor) {
 			// The offset added to the CANCoder for it to measure correctly for a wheel pointing right to be 0 degrees
-			MagnetOffset = when (moduleName) {
-				"FrontRight" -> FRONT_RIGHT_OFFSET.rotations
-				"FrontLeft" -> FRONT_LEFT_OFFSET.rotations
-				"BackLeft" -> BACK_LEFT_OFFSET.rotations
-				"BackRight" -> BACK_RIGHT_OFFSET.rotations
-				else -> 0.0.also { DriverStation.reportError("Invalid swerve module name: $moduleName", false) }
-			}
+			MagnetOffset = moduleOffset.offset.rotations
 
 			SensorDirection = CounterClockwise_Positive
 			AbsoluteSensorRange = Signed_PlusMinusHalf
