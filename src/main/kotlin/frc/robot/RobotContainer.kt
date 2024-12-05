@@ -1,6 +1,5 @@
 package frc.robot
 
-import com.hamosad1657.lib.math.simpleDeadband
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller
@@ -34,12 +33,12 @@ object RobotContainer {
 	}
 
 	private fun configureDefaultCommands() {
-		SwerveSubsystem.defaultCommand = SwerveSubsystem.angularVelocityDriveCommand(
-			{ simpleDeadband(mainController.leftY, DEADBAND) },
-			{ simpleDeadband(mainController.leftX, DEADBAND) },
-			{ simpleDeadband(mainController.rightX, DEADBAND) },
-			true,
-		)
+//		SwerveSubsystem.defaultCommand = SwerveSubsystem.angularVelocityDriveCommand(
+//			{ simpleDeadband(mainController.leftY, DEADBAND) },
+//			{ simpleDeadband(mainController.leftX, DEADBAND) },
+//			{ simpleDeadband(mainController.rightX, DEADBAND) },
+//			true,
+//		)
 	}
 
 	private fun sendSubsystemData() {

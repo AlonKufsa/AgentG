@@ -31,9 +31,7 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 			{ robotRelativeSpeeds },
 			{ speeds: ChassisSpeeds -> drive(false, speeds) },
 			Constants.PP_CONFIGS,
-			{
-				Robot.getAlliance() == Red
-			},
+			{ Robot.getAlliance() == Red },
 			this,
 		)
 	}
@@ -105,6 +103,13 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 		moduleName = "BackRight",
 		Constants.SWERVE_CAN_BUS,
 	)
+	private val modules = arrayOf(
+		frontRight,
+		frontLeft,
+		backLeft,
+		backRight,
+	)
+
 	private val pigeon = Pigeon2(Map.PIGEON_2_ID, Constants.SWERVE_CAN_BUS).apply {
 		configurator.apply(Constants.pigeonConfigs)
 	}
@@ -148,21 +153,14 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 
 
 	fun resetModules() {
-		frontRight.setModuleState(SwerveModuleState())
-		frontLeft.setModuleState(SwerveModuleState())
-		backLeft.setModuleState(SwerveModuleState())
-		backRight.setModuleState(SwerveModuleState())
+		for (module in modules) {
+			module.setModuleState(SwerveModuleState())
+		}
 	}
 
 	// Gyro
-	fun resetGyro() {
-		val pose = estimatedPose
-		pigeon.reset()
-		poseEstimator.resetPosition(
-			Rotation2d(),
-			currentModulePositions,
-			Pose2d(pose.x, pose.y, Rotation2d()),
-		)
+	fun zeroGyro() {
+		setGyro(Rotation2d())
 	}
 
 	fun setGyro(newAngle: Rotation2d) {
@@ -208,10 +206,9 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 					Constants.DRIVEBASE_RADIUS.asMeters,
 				)
 			}
-		frontRight.setModuleState(moduleStates[0])
-		frontLeft.setModuleState(moduleStates[1])
-		backLeft.setModuleState(moduleStates[2])
-		backRight.setModuleState(moduleStates[3])
+		for (iN in 0..1) {
+			modules[iN].setModuleState(moduleStates[iN])
+		}
 	}
 
 	fun driveRotationSetpoint(fieldRelative: Boolean, vxMPS: Double, vyMPS: Double) {
@@ -247,10 +244,9 @@ object SwerveSubsystem : SubsystemBase("Swerve") {
 
 	// Telemetry
 	override fun initSendable(builder: SendableBuilder) {
-		frontRight.sendModuleInfo(builder)
-		frontLeft.sendModuleInfo(builder)
-		backLeft.sendModuleInfo(builder)
-		backRight.sendModuleInfo(builder)
+		for (module in modules) {
+			module.sendModuleInfo(builder)
+		}
 
 		builder.addDoubleProperty("Robot heading deg", { gyroAngle.degrees }, null)
 

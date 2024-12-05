@@ -20,9 +20,9 @@ fun SwerveSubsystem.angularVelocityDriveCommand(
 	fieldRelative: Boolean,
 ): Command = withName("Drive with angular velocity control") {
 	run {
-		val lJoyY = lJoyYSupplier().pow(3)
-		val lJoyX = lJoyXSupplier().pow(3)
-		val rJoyX = rJoyXSupplier().pow(3)
+		val lJoyY = lJoyYSupplier()
+		val lJoyX = lJoyXSupplier()
+		val rJoyX = rJoyXSupplier()
 
 		val chassisSpeeds = ChassisSpeeds(
 			lJoyY * SwerveConstants.MAX_SPEED_MPS,
@@ -30,22 +30,20 @@ fun SwerveSubsystem.angularVelocityDriveCommand(
 			rJoyX * SwerveConstants.MAX_ANGULAR_VELOCITY.asRadPs,
 		)
 		drive(fieldRelative, chassisSpeeds)
-	} finallyDo {
-		resetModules()
 	}
 }
 
 fun SwerveSubsystem.rotationSetpointDriveCommand(
 	lJoyYSupplier: () -> Double,
 	lJoyXSupplier: () -> Double,
-	rotationSetpointInput: () -> Rotation2d,
+	rotationSetpointSupplier: () -> Rotation2d,
 	fieldRelative: Boolean,
 ): Command = withName("Drive with angular velocity control") {
 	run {
 		val lJoyY = lJoyYSupplier().pow(3)
 		val lJoyX = lJoyXSupplier().pow(3)
 
-		rotationSetpoint = rotationSetpointInput()
+		rotationSetpoint = rotationSetpointSupplier()
 
 		val chassisSpeeds = ChassisSpeeds(
 			lJoyY * SwerveConstants.MAX_SPEED_MPS,
@@ -64,18 +62,20 @@ fun SwerveSubsystem.rotationSetpointDriveCommand(
 
 fun SwerveSubsystem.followPathCommand(path: PathPlannerPath): Command = AutoBuilder.followPath(path)
 
+/**
+ * @param rotationSetpointOverrideSupplier - The override given to the rotation target,
+ * when an empty optional is received, pathplanner uses the rotation target from the path
+ */
 fun SwerveSubsystem.followPathWithRotationSetpointCommand(
 	path: PathPlannerPath,
-	rotationSetpointInput: () -> Rotation2d,
+	rotationSetpointOverrideSupplier: () -> Optional<Rotation2d>,
 ): Command {
-	PPHolonomicDriveController.setRotationTargetOverride {
-		Optional.of(rotationSetpointInput())
-	}
+	PPHolonomicDriveController.setRotationTargetOverride(rotationSetpointOverrideSupplier)
 	return withName("Follow path with rotation setpoint") {
 		followPathCommand(path)
 	} finallyDo {
 		PPHolonomicDriveController.setRotationTargetOverride {
-			Optional.ofNullable(null)
+			Optional.empty()
 		}
 	}
 }
@@ -85,5 +85,5 @@ fun SwerveSubsystem.resetOdometryCommand(pose: Pose2d): Command = withName("Rese
 }
 
 fun SwerveSubsystem.resetGyroCommand(): Command = withName("Reset gyro") {
-	runOnce { resetGyro() }
+	runOnce { zeroGyro() }
 }

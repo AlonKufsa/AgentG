@@ -25,10 +25,10 @@ enum class PoseEstimationMode {
 
 object SwerveConstants {
 	enum class ModuleOffset(val offset: Rotation2d) {
-		FRONT_RIGHT(Rotation2d.fromDegrees(0.0)),
-		FRONT_LEFT(Rotation2d.fromDegrees(0.0)),
-		BACK_LEFT(Rotation2d.fromDegrees(0.0)),
-		BACK_RIGHT(Rotation2d.fromDegrees(0.0)),
+		FRONT_RIGHT(Rotation2d.fromDegrees(-89.560547)),
+		FRONT_LEFT(Rotation2d.fromDegrees(137.548828)),
+		BACK_LEFT(Rotation2d.fromDegrees(97.470703)),
+		BACK_RIGHT(Rotation2d.fromDegrees(174.287109)),
 	}
 
 	const val SWERVE_CAN_BUS = "SwerveBus"
@@ -61,11 +61,6 @@ object SwerveConstants {
 	val DRIVEBASE_RADIUS = Length.fromMeters(0.417405)
 	val MAX_ANGULAR_VELOCITY = AngularVelocity.fromRps(MAX_SPEED_MPS / 2 * PI * DRIVEBASE_RADIUS.asMeters)
 	val MODULE_OFFSET = (DRIVEBASE_RADIUS / sqrt(2.0))
-
-	val FRONT_RIGHT_OFFSET = Rotation2d.fromDegrees(-268.066406)
-	val FRONT_LEFT_OFFSET = Rotation2d.fromDegrees(-222.539062)
-	val BACK_LEFT_OFFSET = Rotation2d.fromDegrees(95.537)
-	val BACK_RIGHT_OFFSET = Rotation2d.fromDegrees(-185.888672)
 
 	val DRIVE_MOTOR_CONFIGS: TalonFXConfiguration = TalonFXConfiguration().apply {
 		// Current limits

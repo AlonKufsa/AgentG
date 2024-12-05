@@ -6,7 +6,6 @@ import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import kotlin.math.PI
 import kotlin.math.max
 
 /** All module states are FR, FL, BL, BR */
@@ -24,7 +23,7 @@ object SwerveKinematics {
 		angularVelocity: AngularVelocity,
 		driveBaseRadiusMeters: Double,
 	): Array<SwerveModuleState> {
-		val wheelSpeedMPS: Double = angularVelocity.asRps * 2 * PI * driveBaseRadiusMeters
+		val wheelSpeedMPS: Double = angularVelocity.asRadPs * driveBaseRadiusMeters
 
 		val moduleStates = Array<SwerveModuleState>(4) { SwerveModuleState() }
 
@@ -50,6 +49,8 @@ object SwerveKinematics {
 	/**
 	 * Converts between chassis speeds and module states.
 	 * Positive chassis speeds omega results in counterclockwise rotation.
+	 *
+	 * x direction is forward, y direction is left
 	 */
 	fun robotRelativeChassisSpeedsToModuleStates(
 		chassisSpeeds: ChassisSpeeds,
@@ -60,7 +61,7 @@ object SwerveKinematics {
 		currentRobotRelativeChassisSpeeds = discreteChassisSpeeds
 
 		val moduleTranslationVelocity =
-			Translation2d(discreteChassisSpeeds.vyMetersPerSecond, discreteChassisSpeeds.vxMetersPerSecond)
+			Translation2d(-discreteChassisSpeeds.vyMetersPerSecond, discreteChassisSpeeds.vxMetersPerSecond)
 
 		val velocityModuleState = robotRelativeVelocityToModuleStates(moduleTranslationVelocity)
 		val rotationModuleStates =
@@ -87,7 +88,7 @@ object SwerveKinematics {
 
 	/** Heading is counter-clockwise positive.
 	 *
-	 * Chassis speeds have x represent forward, and y the left direction
+	 * Chassis speeds have x represent the direction going away from the blue driver station, and y to the left of it
 	 *
 	 * Positive omega results in robot spinning counter-clockwise*/
 	fun fieldRelativeChassisSpeedsToModuleStates(
